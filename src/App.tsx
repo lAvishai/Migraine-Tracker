@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { User } from "firebase/auth";
 import { MigraineLog, DEFAULT_SYMPTOMS, DEFAULT_TRIGGERS, DEFAULT_REMEDIES } from "./types";
 import MigraineForm from "./components/MigraineForm";
@@ -46,6 +46,9 @@ export default function App() {
     error: null,
   });
 
+  const driveFileIdRef = useRef<string | null>(null);
+  const driveFileUrlRef = useRef<string | null>(null);
+
   // Live tracker for ongoing attack duration
   const [activeAttackDuration, setActiveAttackDuration] = useState<string>("");
 
@@ -69,14 +72,17 @@ export default function App() {
   const performDriveSync = async (targetLogs: MigraineLog[], tokenToUse: string, forceFileId?: string) => {
     setDriveSyncStatus((prev) => ({ ...prev, isSyncing: true, error: null }));
     try {
-      let fileId = forceFileId || driveSyncStatus.fileId;
-      let fileUrl = driveSyncStatus.fileUrl;
+      let fileId = forceFileId || driveFileIdRef.current || driveSyncStatus.fileId;
+      let fileUrl = driveFileUrlRef.current || driveSyncStatus.fileUrl;
 
       if (!fileId) {
         const fileInfo = await findOrCreateDriveFile(tokenToUse);
         fileId = fileInfo.id;
         fileUrl = fileInfo.webViewLink || null;
       }
+
+      driveFileIdRef.current = fileId;
+      driveFileUrlRef.current = fileUrl;
 
       await syncLogsToDrive(tokenToUse, fileId, targetLogs);
 
@@ -104,13 +110,6 @@ export default function App() {
     }
   };
 
-  // Sync to Google Drive when user is logged in and logs change
-  useEffect(() => {
-    if (user && accessToken) {
-      performDriveSync(logs, accessToken);
-    }
-  }, [user, accessToken, logs]);
-
   const handleGoogleLogin = async () => {
     setIsLoggingIn(true);
     try {
@@ -135,6 +134,8 @@ export default function App() {
     await logout();
     setUser(null);
     setAccessToken(null);
+    driveFileIdRef.current = null;
+    driveFileUrlRef.current = null;
     setDriveSyncStatus({
       lastSynced: null,
       fileUrl: null,
@@ -156,10 +157,12 @@ export default function App() {
     if (!user || !accessToken) return;
     setDriveSyncStatus((prev) => ({ ...prev, isSyncing: true, error: null }));
     try {
-      let fileId = driveSyncStatus.fileId;
+      let fileId = driveFileIdRef.current || driveSyncStatus.fileId;
       if (!fileId) {
         const fileInfo = await findOrCreateDriveFile(accessToken);
         fileId = fileInfo.id;
+        driveFileIdRef.current = fileId;
+        driveFileUrlRef.current = fileInfo.webViewLink || null;
       }
       const restoredLogs = await restoreLogsFromDrive(accessToken, fileId);
       if (restoredLogs && restoredLogs.length > 0) {
@@ -191,10 +194,13 @@ export default function App() {
     }
   }, []);
 
-  // Save logs to local storage
+  // Save logs to local storage and sync to Google Drive if user is logged in
   const saveLogsToStorage = (newLogs: MigraineLog[]) => {
     setLogs(newLogs);
     localStorage.setItem("migraine_logs", JSON.stringify(newLogs));
+    if (user && accessToken) {
+      performDriveSync(newLogs, accessToken);
+    }
   };
 
   // Check for active ongoing attacks and update the duration timer
@@ -328,36 +334,38 @@ export default function App() {
                   </span>
                 )}
               </h1>
-              <p className="text-[10px] text-warm-muted">יומן הבריאות וזיהוי הטריגרים האישי שלך</p>
             </div>
           </div>
 
-          <button
-            id="add-attack-header-btn"
-            onClick={() => {
-              setEditingLog(null);
-              setIsFormOpen(true);
-            }}
-            className="px-4 py-2 bg-sunset hover:bg-sunset-hover text-warm-dark font-bold text-xs rounded-xl transition-all shadow-md flex items-center gap-1.5"
-          >
-            <Plus size={14} />
-            דיווח על התקף
-          </button>
+          <div className="flex items-center gap-2">
+            <GoogleDriveHeader
+              user={user}
+              syncStatus={driveSyncStatus}
+              isLoggingIn={isLoggingIn}
+              onLogin={handleGoogleLogin}
+              onLogout={handleGoogleLogout}
+              onSyncNow={handleManualDriveSync}
+              onRestore={handleRestoreFromDrive}
+            />
+
+            <button
+              id="add-attack-header-btn"
+              onClick={() => {
+                setEditingLog(null);
+                setIsFormOpen(true);
+              }}
+              className="hidden sm:flex items-center gap-1.5 px-4 py-2 bg-sunset hover:bg-sunset-hover text-warm-dark font-bold text-xs rounded-xl transition-all shadow-md"
+              title="דיווח על התקף"
+            >
+              <Plus size={18} />
+              <span>דיווח על התקף</span>
+            </button>
+          </div>
         </div>
       </header>
 
       {/* Main Container */}
       <main className="max-w-4xl mx-auto px-4 mt-6 space-y-6">
-        {/* Google Drive Integration Header */}
-        <GoogleDriveHeader
-          user={user}
-          syncStatus={driveSyncStatus}
-          isLoggingIn={isLoggingIn}
-          onLogin={handleGoogleLogin}
-          onLogout={handleGoogleLogout}
-          onSyncNow={handleManualDriveSync}
-          onRestore={handleRestoreFromDrive}
-        />
 
         {/* Active Attack Notification Banner */}
         {activeAttack && (
@@ -421,7 +429,6 @@ export default function App() {
           >
             <Brain size={14} />
             ניתוח חכם AI
-            {logs.length > 0 && <span className="px-1.5 py-0.5 text-[8px] bg-sunset/20 text-sunset border border-sunset/30 rounded-full font-bold">חדש</span>}
           </button>
         </div>
 
@@ -617,7 +624,8 @@ export default function App() {
             setEditingLog(null);
             setIsFormOpen(true);
           }}
-          className="w-14 h-14 rounded-full bg-sunset text-warm-dark flex items-center justify-center shadow-2xl hover:scale-105 active:scale-95 transition-transform"
+          className="w-12 h-12 rounded-2xl bg-sunset text-warm-dark flex items-center justify-center shadow-2xl hover:scale-105 active:scale-95 transition-all border border-white/10"
+          title="דיווח על התקף"
         >
           <Plus size={24} />
         </button>
