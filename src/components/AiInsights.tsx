@@ -41,7 +41,9 @@ export default function AiInsights({ logs }: AiInsightsProps) {
     setLoadingMessageIndex(0);
 
     try {
-      const response = await fetch("/api/gemini/analyze", {
+      const baseUrl = import.meta.env.BASE_URL || "/";
+      const apiEndpoint = `${baseUrl.replace(/\/$/, "")}/api/gemini/analyze`;
+      const response = await fetch(apiEndpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

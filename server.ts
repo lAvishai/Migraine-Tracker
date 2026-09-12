@@ -31,8 +31,10 @@ function getGenAI(): GoogleGenAI {
   return aiClient;
 }
 
+const BASE_PATH = process.env.BASE_PATH || "/Migraine-Tracker";
+
 // AI Analysis Endpoint
-app.post("/api/gemini/analyze", async (req: express.Request, res: express.Response): Promise<void> => {
+app.post(["/api/gemini/analyze", `${BASE_PATH}/api/gemini/analyze`], async (req: express.Request, res: express.Response): Promise<void> => {
   try {
     const { logs } = req.body;
 
@@ -100,18 +102,30 @@ async function startServer() {
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
+      base: `${BASE_PATH}/`,
     });
     app.use(vite.middlewares);
+    // Redirect root / to BASE_PATH/
+    app.get("/", (_req, res) => {
+      res.redirect(`${BASE_PATH}/`);
+    });
   } else {
     const distPath = path.join(process.cwd(), "dist");
+    app.use(BASE_PATH, express.static(distPath));
     app.use(express.static(distPath));
-    app.get("*", (req, res) => {
+    app.get(`${BASE_PATH}/*`, (_req, res) => {
+      res.sendFile(path.join(distPath, "index.html"));
+    });
+    app.get("/", (_req, res) => {
+      res.redirect(`${BASE_PATH}/`);
+    });
+    app.get("*", (_req, res) => {
       res.sendFile(path.join(distPath, "index.html"));
     });
   }
 
   app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+    console.log(`Server running on http://localhost:${PORT}${BASE_PATH}/`);
   });
 }
 
