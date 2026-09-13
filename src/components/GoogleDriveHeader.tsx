@@ -246,24 +246,8 @@ export default function GoogleDriveHeader({
             </a>
           </div>
 
-          {/* About & Logout Actions */}
-          <div className="pt-2 space-y-1 border-t border-white/10 mt-2">
-            {onOpenAbout && (
-              <button
-                onClick={() => {
-                  setIsOpen(false);
-                  onOpenAbout();
-                }}
-                className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-warm-text hover:bg-white/5 transition-colors text-xs font-medium cursor-pointer"
-              >
-                <span className="flex items-center gap-2">
-                  <Info size={14} className="text-sunset" />
-                  <span>אודות האפליקציה</span>
-                </span>
-                <span className="text-[10px] text-warm-muted bg-white/5 px-1.5 py-0.5 rounded">v{APP_VERSION}</span>
-              </button>
-            )}
-
+          {/* Logout Action */}
+          <div className="pt-2 space-y-1">
             <button
               onClick={() => {
                 setIsOpen(false);
