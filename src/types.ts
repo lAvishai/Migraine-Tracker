@@ -1,4 +1,6 @@
-export const APP_VERSION = "1.0.0";
+import pkg from '../package.json';
+
+export const APP_VERSION = pkg.version;
 
 export interface MigraineLog {
   id: string;
