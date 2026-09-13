@@ -25,8 +25,7 @@ import {
   Trash2, 
   ChevronRight, 
   CheckCircle,
-  Sparkles,
-  Info
+  Sparkles
 } from "lucide-react";
 
 export default function App() {
@@ -322,12 +321,16 @@ export default function App() {
       {/* Upper Navigation Bar */}
       <header className="border-b border-warm-border/60 bg-warm-card/80 backdrop-blur-md sticky top-0 z-40 px-4 py-4 md:px-8">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-sunset/15 border border-sunset/30 flex items-center justify-center text-sunset shadow-inner">
+          <button
+            onClick={() => setIsAboutOpen(true)}
+            className="flex items-center gap-3 text-right group cursor-pointer focus:outline-none"
+            title="אודות האפליקציה"
+          >
+            <div className="w-10 h-10 rounded-xl bg-sunset/15 border border-sunset/30 flex items-center justify-center text-sunset shadow-inner group-hover:scale-105 group-hover:bg-sunset/20 transition-all">
               <Activity size={20} className="animate-pulse" />
             </div>
             <div>
-              <h1 className="text-lg font-bold tracking-tight text-warm-text flex items-center gap-2">
+              <h1 className="text-lg font-bold tracking-tight text-warm-text flex items-center gap-2 group-hover:text-sunset transition-colors">
                 מעקב מיגרנה
                 {activeAttack && (
                   <span className="flex h-2.5 w-2.5 relative">
@@ -337,18 +340,9 @@ export default function App() {
                 )}
               </h1>
             </div>
-          </div>
+          </button>
 
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => setIsAboutOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-2 bg-white/5 hover:bg-white/10 active:scale-95 text-warm-text font-medium text-xs rounded-xl border border-white/10 transition-all cursor-pointer shadow-sm"
-              title="אודות מעקב מיגרנה"
-            >
-              <Info size={14} className="text-sunset" />
-              <span className="text-warm-muted hidden sm:inline">v{APP_VERSION}</span>
-            </button>
-
             <GoogleDriveHeader
               user={user}
               syncStatus={driveSyncStatus}
