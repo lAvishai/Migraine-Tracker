@@ -10,9 +10,11 @@ import {
   ExternalLink, 
   ChevronDown, 
   User as UserIcon,
-  Globe
+  Globe,
+  Info
 } from "lucide-react";
 import { DriveSyncStatus } from "../lib/googleDriveSync";
+import { APP_VERSION } from "../types";
 
 interface GoogleDriveHeaderProps {
   user: GoogleUser | null;
@@ -22,6 +24,7 @@ interface GoogleDriveHeaderProps {
   onLogout: () => void;
   onSyncNow: () => void;
   onRestore: () => void;
+  onOpenAbout?: () => void;
 }
 
 export default function GoogleDriveHeader({
@@ -32,6 +35,7 @@ export default function GoogleDriveHeader({
   onLogout,
   onSyncNow,
   onRestore,
+  onOpenAbout,
 }: GoogleDriveHeaderProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [showRestoreConfirm, setShowRestoreConfirm] = useState(false);
@@ -239,8 +243,24 @@ export default function GoogleDriveHeader({
             )}
           </div>
 
-          {/* Logout Action */}
-          <div className="pt-2">
+          {/* About & Logout Actions */}
+          <div className="pt-2 space-y-1 border-t border-white/10 mt-2">
+            {onOpenAbout && (
+              <button
+                onClick={() => {
+                  setIsOpen(false);
+                  onOpenAbout();
+                }}
+                className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-warm-text hover:bg-white/5 transition-colors text-xs font-medium cursor-pointer"
+              >
+                <span className="flex items-center gap-2">
+                  <Info size={14} className="text-sunset" />
+                  <span>אודות האפליקציה</span>
+                </span>
+                <span className="text-[10px] text-warm-muted bg-white/5 px-1.5 py-0.5 rounded">v{APP_VERSION}</span>
+              </button>
+            )}
+
             <button
               onClick={() => {
                 setIsOpen(false);

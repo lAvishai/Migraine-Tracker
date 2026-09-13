@@ -1,3 +1,5 @@
+export const APP_VERSION = "1.0.0";
+
 export interface MigraineLog {
   id: string;
   startTime: string; // ISO date-time string

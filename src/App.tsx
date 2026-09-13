@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
-import { MigraineLog, DEFAULT_SYMPTOMS, DEFAULT_TRIGGERS, DEFAULT_REMEDIES } from "./types";
+import { MigraineLog, DEFAULT_SYMPTOMS, DEFAULT_TRIGGERS, DEFAULT_REMEDIES, APP_VERSION } from "./types";
 import MigraineForm from "./components/MigraineForm";
 import AnalyticsPanel from "./components/AnalyticsPanel";
 import AiInsights from "./components/AiInsights";
 import GoogleDriveHeader from "./components/GoogleDriveHeader";
+import AboutModal from "./components/AboutModal";
 import { GoogleUser, initGoogleAuth, googleSignIn, logout } from "./lib/googleAuth";
 import { 
   findOrCreateDriveFile, 
@@ -24,12 +25,14 @@ import {
   Trash2, 
   ChevronRight, 
   CheckCircle,
-  Sparkles
+  Sparkles,
+  Info
 } from "lucide-react";
 
 export default function App() {
   const [logs, setLogs] = useState<MigraineLog[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isAboutOpen, setIsAboutOpen] = useState(false);
   const [editingLog, setEditingLog] = useState<MigraineLog | null>(null);
   const [activeTab, setActiveTab] = useState<"history" | "analytics" | "ai">("history");
 
@@ -337,6 +340,15 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsAboutOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-2 bg-white/5 hover:bg-white/10 active:scale-95 text-warm-text font-medium text-xs rounded-xl border border-white/10 transition-all cursor-pointer shadow-sm"
+              title="אודות מעקב מיגרנה"
+            >
+              <Info size={14} className="text-sunset" />
+              <span className="text-warm-muted hidden sm:inline">v{APP_VERSION}</span>
+            </button>
+
             <GoogleDriveHeader
               user={user}
               syncStatus={driveSyncStatus}
@@ -345,6 +357,7 @@ export default function App() {
               onLogout={handleGoogleLogout}
               onSyncNow={handleManualDriveSync}
               onRestore={handleRestoreFromDrive}
+              onOpenAbout={() => setIsAboutOpen(true)}
             />
 
             <button
@@ -641,6 +654,12 @@ export default function App() {
           initialLog={editingLog}
         />
       )}
+
+      {/* About Application modal */}
+      <AboutModal
+        isOpen={isAboutOpen}
+        onClose={() => setIsAboutOpen(false)}
+      />
     </div>
   );
 }
