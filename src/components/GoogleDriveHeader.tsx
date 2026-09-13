@@ -230,17 +230,20 @@ export default function GoogleDriveHeader({
             </div>
 
             {/* View File in Google Drive Link */}
-            {syncStatus.fileUrl && (
-              <a
-                href={syncStatus.fileUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-between text-[11px] text-sunset hover:underline pt-1 font-medium"
-              >
-                <span>הצג קובץ גיבוי ב-Drive</span>
-                <ExternalLink size={12} />
-              </a>
-            )}
+            <a
+              href={
+                syncStatus.fileUrl ||
+                (syncStatus.fileId
+                  ? `https://drive.google.com/file/d/${syncStatus.fileId}/view`
+                  : "https://drive.google.com/drive/search?q=name:migraine_tracker_backup.json")
+              }
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-between text-[11px] text-sunset hover:underline pt-1 font-medium cursor-pointer"
+            >
+              <span>הצג קובץ גיבוי ב-Drive</span>
+              <ExternalLink size={12} />
+            </a>
           </div>
 
           {/* About & Logout Actions */}

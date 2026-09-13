@@ -39,12 +39,18 @@ export default function App() {
   const [user, setUser] = useState<GoogleUser | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
-  const [driveSyncStatus, setDriveSyncStatus] = useState<DriveSyncStatus>({
-    lastSynced: null,
-    fileUrl: null,
-    fileId: null,
-    isSyncing: false,
-    error: null,
+  const [driveSyncStatus, setDriveSyncStatus] = useState<DriveSyncStatus>(() => {
+    try {
+      const saved = localStorage.getItem("migraine_tracker_drive_sync_info");
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return {
+      lastSynced: null,
+      fileUrl: null,
+      fileId: null,
+      isSyncing: false,
+      error: null,
+    };
   });
 
   const driveFileIdRef = useRef<string | null>(null);
@@ -94,13 +100,18 @@ export default function App() {
       const hours = String(now.getHours()).padStart(2, "0");
       const minutes = String(now.getMinutes()).padStart(2, "0");
 
-      setDriveSyncStatus({
+      const newStatus = {
         lastSynced: `${day}/${month}/${year} ${hours}:${minutes}`,
         fileUrl: fileUrl,
         fileId: fileId,
         isSyncing: false,
         error: null,
-      });
+      };
+
+      setDriveSyncStatus(newStatus);
+      try {
+        localStorage.setItem("migraine_tracker_drive_sync_info", JSON.stringify(newStatus));
+      } catch (e) {}
     } catch (err: any) {
       console.error("Google Drive sync error:", err);
       setDriveSyncStatus((prev) => ({
@@ -137,6 +148,9 @@ export default function App() {
     setAccessToken(null);
     driveFileIdRef.current = null;
     driveFileUrlRef.current = null;
+    try {
+      localStorage.removeItem("migraine_tracker_drive_sync_info");
+    } catch (e) {}
     setDriveSyncStatus({
       lastSynced: null,
       fileUrl: null,

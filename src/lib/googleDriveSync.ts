@@ -55,7 +55,7 @@ export async function findOrCreateDriveFile(accessToken: string): Promise<DriveF
     const existingFile = searchData.files[0];
     return {
       id: existingFile.id,
-      webViewLink: existingFile.webViewLink,
+      webViewLink: existingFile.webViewLink || `https://drive.google.com/file/d/${existingFile.id}/view`,
     };
   }
 
@@ -83,7 +83,7 @@ export async function findOrCreateDriveFile(accessToken: string): Promise<DriveF
   const createdFile = await createRes.json();
   return {
     id: createdFile.id,
-    webViewLink: createdFile.webViewLink,
+    webViewLink: createdFile.webViewLink || `https://drive.google.com/file/d/${createdFile.id}/view`,
   };
 }
 
