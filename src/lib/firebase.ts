@@ -16,12 +16,33 @@ export const auth = getAuth(app);
 
 const provider = new GoogleAuthProvider();
 provider.addScope('https://www.googleapis.com/auth/drive.file');
-provider.setCustomParameters({
-  prompt: 'select_account'
-});
+
+const TOKEN_STORAGE_KEY = 'migraine_tracker_google_token';
+
+const saveStoredAccessToken = (token: string) => {
+  try {
+    localStorage.setItem(TOKEN_STORAGE_KEY, token);
+  } catch (e) {
+    console.warn('Unable to store access token in localStorage', e);
+  }
+};
+
+const getStoredAccessToken = (): string | null => {
+  try {
+    return localStorage.getItem(TOKEN_STORAGE_KEY);
+  } catch (e) {
+    return null;
+  }
+};
+
+const clearStoredAccessToken = () => {
+  try {
+    localStorage.removeItem(TOKEN_STORAGE_KEY);
+  } catch (e) {}
+};
 
 let isSigningIn = false;
-let cachedAccessToken: string | null = null;
+let cachedAccessToken: string | null = getStoredAccessToken();
 
 export const initAuth = (
   onAuthSuccess?: (user: User, token: string) => void,
@@ -34,6 +55,7 @@ export const initAuth = (
         const credential = GoogleAuthProvider.credentialFromResult(result);
         if (credential?.accessToken) {
           cachedAccessToken = credential.accessToken;
+          saveStoredAccessToken(cachedAccessToken);
           if (onAuthSuccess && result.user) {
             onAuthSuccess(result.user, cachedAccessToken);
           }
@@ -46,11 +68,13 @@ export const initAuth = (
 
   return onAuthStateChanged(auth, async (user) => {
     if (user) {
-      if (cachedAccessToken) {
-        if (onAuthSuccess) onAuthSuccess(user, cachedAccessToken);
+      if (!cachedAccessToken) {
+        cachedAccessToken = getStoredAccessToken();
       }
+      if (onAuthSuccess) onAuthSuccess(user, cachedAccessToken || "");
     } else {
       cachedAccessToken = null;
+      clearStoredAccessToken();
       if (onAuthFailure) onAuthFailure();
     }
   });
@@ -65,6 +89,7 @@ export const googleSignIn = async (): Promise<{ user: User; accessToken: string 
       throw new Error('לא התקבל אסימון גישה (Access Token) מ-Google Auth');
     }
     cachedAccessToken = credential.accessToken;
+    saveStoredAccessToken(cachedAccessToken);
     return { user: result.user, accessToken: cachedAccessToken };
   } catch (error: any) {
     console.error('Google Sign in error:', error);
@@ -91,11 +116,12 @@ export const googleSignInRedirect = async (): Promise<void> => {
 };
 
 export const getAccessToken = async (): Promise<string | null> => {
-  return cachedAccessToken;
+  return cachedAccessToken || getStoredAccessToken();
 };
 
 export const logout = async () => {
   await signOut(auth);
   cachedAccessToken = null;
+  clearStoredAccessToken();
 };
 
