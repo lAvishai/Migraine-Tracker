@@ -15,6 +15,23 @@ export interface DriveFileInfo {
   webViewLink?: string;
 }
 
+function parseGoogleError(errorText: string, fallback: string): string {
+  try {
+    const errJson = JSON.parse(errorText);
+    const msg = errJson?.error?.message;
+    if (msg) {
+      if (msg.includes("has not been used in project") || msg.includes("disabled")) {
+        return "Google Drive API אינו מופעל בפרויקט שלכם ב-Google Cloud Console. היכנסו ל-APIs & Services > Library וחפשו Google Drive API כדי להפעילו.";
+      }
+      if (msg.includes("insufficient authentication scopes") || msg.includes("ACCESS_TOKEN_SCOPE_INSUFFICIENT")) {
+        return "הרשאת הגישה ל-Google Drive טרם אושרה. אנא התנתק והתחבר מחדש וסמן אישור ל-Google Drive.";
+      }
+      return `${fallback} (${msg})`;
+    }
+  } catch (e) {}
+  return fallback;
+}
+
 /**
  * Searches for an existing backup file in Google Drive or creates a new one.
  */
@@ -30,7 +47,7 @@ export async function findOrCreateDriveFile(accessToken: string): Promise<DriveF
   if (!searchRes.ok) {
     const errorText = await searchRes.text();
     console.error("Error searching Google Drive:", errorText);
-    throw new Error("נכשלה החיפוש בקובצי Google Drive");
+    throw new Error(parseGoogleError(errorText, "נכשל החיפוש בקובצי Google Drive"));
   }
 
   const searchData = await searchRes.json();
@@ -60,7 +77,7 @@ export async function findOrCreateDriveFile(accessToken: string): Promise<DriveF
   if (!createRes.ok) {
     const errorText = await createRes.text();
     console.error("Error creating Google Drive backup file:", errorText);
-    throw new Error("נכשלה יצירת קובץ הגיבוי ב-Google Drive");
+    throw new Error(parseGoogleError(errorText, "נכשלה יצירת קובץ הגיבוי ב-Google Drive"));
   }
 
   const createdFile = await createRes.json();
@@ -102,7 +119,7 @@ export async function syncLogsToDrive(
   if (!res.ok) {
     const errorText = await res.text();
     console.error("Error updating Google Drive backup file:", errorText);
-    throw new Error("שגיאה בעדכון קובץ הגיבוי ב-Google Drive");
+    throw new Error(parseGoogleError(errorText, "שגיאה בעדכון קובץ הגיבוי ב-Google Drive"));
   }
 }
 
@@ -123,7 +140,7 @@ export async function restoreLogsFromDrive(
   if (!res.ok) {
     const errorText = await res.text();
     console.error("Error downloading Google Drive backup file:", errorText);
-    throw new Error("נכשלה הורדת הגיבוי מ-Google Drive");
+    throw new Error(parseGoogleError(errorText, "נכשלה הורדת הגיבוי מ-Google Drive"));
   }
 
   const data = await res.json();

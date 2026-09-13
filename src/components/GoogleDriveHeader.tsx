@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { User } from "firebase/auth";
+import { GoogleUser } from "../lib/googleAuth";
 import { 
   RefreshCw, 
   Download, 
@@ -15,7 +15,7 @@ import {
 import { DriveSyncStatus } from "../lib/googleDriveSync";
 
 interface GoogleDriveHeaderProps {
-  user: User | null;
+  user: GoogleUser | null;
   syncStatus: DriveSyncStatus;
   isLoggingIn: boolean;
   onLogin: () => void;

@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
-import { User } from "firebase/auth";
 import { MigraineLog, DEFAULT_SYMPTOMS, DEFAULT_TRIGGERS, DEFAULT_REMEDIES } from "./types";
 import MigraineForm from "./components/MigraineForm";
 import AnalyticsPanel from "./components/AnalyticsPanel";
 import AiInsights from "./components/AiInsights";
 import GoogleDriveHeader from "./components/GoogleDriveHeader";
-import { initAuth, googleSignIn, logout } from "./lib/firebase";
+import { GoogleUser, initGoogleAuth, googleSignIn, logout } from "./lib/googleAuth";
 import { 
   findOrCreateDriveFile, 
   syncLogsToDrive, 
@@ -35,7 +34,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<"history" | "analytics" | "ai">("history");
 
   // Google Auth & Drive Sync state
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<GoogleUser | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [driveSyncStatus, setDriveSyncStatus] = useState<DriveSyncStatus>({
@@ -54,7 +53,7 @@ export default function App() {
 
   // Initialize Auth state listener
   useEffect(() => {
-    const unsubscribe = initAuth(
+    const unsubscribe = initGoogleAuth(
       (u, token) => {
         setUser(u);
         setAccessToken(token);
